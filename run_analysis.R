@@ -1,34 +1,36 @@
-filesPath <- "C:\\Users\\Ria M Jack\\Documents\\RStudio\\CleanDataTrackingDevices"
-setwd(filesPath)
+#############Grab the data########################
 if(!file.exists("./data")){dir.create("./data")}
 fileUrl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
 download.file(fileUrl,destfile="./data/Dataset.zip",method="curl")
 
 unzip(zipfile="./data/Dataset.zip",exdir="./data")
 
-filesPath <- "C:\\Users\\Ria M Jack\\Documents\\RStudio\\CleanDataTrackingDevices\\data\\UCI HAR Dataset"
-# Read subject files
+filesPath <- file.path("./data" , "UCI HAR Dataset")
+
+filesPath <- "C:\\Users\\Ria M Jack\\Documents\\RStudio\
+
+# Read the data from the key files i.e. files with the test and train data
+#Subject data
 dataSubjectTrain <- tbl_df(read.table(file.path(filesPath, "train", "subject_train.txt")))
 dataSubjectTest  <- tbl_df(read.table(file.path(filesPath, "test" , "subject_test.txt" )))
 
-# Read activity files
+#Activity data
 dataActivityTrain <- tbl_df(read.table(file.path(filesPath, "train", "Y_train.txt")))
 dataActivityTest  <- tbl_df(read.table(file.path(filesPath, "test" , "Y_test.txt" )))
 
-#Read data files.
+#Features data
 dataTrain <- tbl_df(read.table(file.path(filesPath, "train", "X_train.txt" )))
 dataTest  <- tbl_df(read.table(file.path(filesPath, "test" , "X_test.txt" )))
 
-######################Merge Two Data Sets
+######################Merge the key Data Sets###############################
 
-# for both Activity and Subject files this will merge the training and the test sets by row binding 
-#and rename variables "subject" and "activityNum"
+# Merge the Subject and Activity data sets and rename variables "subject" and "activityNum"
 alldataSubject <- rbind(dataSubjectTrain, dataSubjectTest)
 setnames(alldataSubject, "V1", "subject")
 alldataActivity<- rbind(dataActivityTrain, dataActivityTest)
 setnames(alldataActivity, "V1", "activityNum")
 
-#combine the DATA training and test files
+#combine the data training and test files
 dataTable <- rbind(dataTrain, dataTest)
 
 # name variables according to feature e.g.(V1 = "tBodyAcc-mean()-X")
@@ -40,20 +42,22 @@ colnames(dataTable) <- dataFeatures$featureName
 activityLabels<- tbl_df(read.table(file.path(filesPath, "activity_labels.txt")))
 setnames(activityLabels, names(activityLabels), c("activityNum","activityName"))
 
-# Merge columns
+# Merging activity and data columns
 alldataSubjAct<- cbind(alldataSubject, alldataActivity)
 dataTable <- cbind(alldataSubjAct, dataTable)
 
-#############Extract MEan and Std Deviation
-# Reading "features.txt" and extracting only the mean and standard deviation
+#############Extract Mean and Std Deviation##############
+
+# Extracting only the mean and standard deviation
 dataFeaturesMeanStd <- grep("mean\\(\\)|std\\(\\)",dataFeatures$featureName,value=TRUE) #var name
 
-# Taking only measurements for the mean and standard deviation and add "subject","activityNum"
+# Adding "subject","activityNum"
 
 dataFeaturesMeanStd <- union(c("subject","activityNum"), dataFeaturesMeanStd)
 dataTable<- subset(dataTable,select=dataFeaturesMeanStd) 
 
-###############Descriptive ACtivity Names
+###############Descriptive Activity Names##########################
+
 ##enter name of activity into dataTable
 dataTable <- merge(activityLabels, dataTable , by="activityNum", all.x=TRUE)
 dataTable$activityName <- as.character(dataTable$activityName)
@@ -63,7 +67,7 @@ dataTable$activityName <- as.character(dataTable$activityName)
 dataAggr<- aggregate(. ~ subject - activityName, data = dataTable, mean) 
 dataTable<- tbl_df(arrange(dataAggr,subject,activityName))
 
-#Change names
+############Descriptive Variable Names################
 names(dataTable)<-gsub("std()", "SD", names(dataTable))
 names(dataTable)<-gsub("mean()", "MEAN", names(dataTable))
 names(dataTable)<-gsub("^t", "time", names(dataTable))
@@ -72,3 +76,6 @@ names(dataTable)<-gsub("Acc", "Accelerometer", names(dataTable))
 names(dataTable)<-gsub("Gyro", "Gyroscope", names(dataTable))
 names(dataTable)<-gsub("Mag", "Magnitude", names(dataTable))
 names(dataTable)<-gsub("BodyBody", "Body", names(dataTable))
+
+###############Independent, second Table with Data###################
+write.table(dataTable, "tidyData.txt", row.name=FALSE)
