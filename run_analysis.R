@@ -7,8 +7,6 @@ unzip(zipfile="./data/Dataset.zip",exdir="./data")
 
 filesPath <- file.path("./data" , "UCI HAR Dataset")
 
-filesPath <- "C:\\Users\\Ria M Jack\\Documents\\RStudio\
-
 # Read the data from the key files i.e. files with the test and train data
 #Subject data
 dataSubjectTrain <- tbl_df(read.table(file.path(filesPath, "train", "subject_train.txt")))
@@ -78,4 +76,4 @@ names(dataTable)<-gsub("Mag", "Magnitude", names(dataTable))
 names(dataTable)<-gsub("BodyBody", "Body", names(dataTable))
 
 ###############Independent, second Table with Data###################
-write.table(dataTable, "tidyData.txt", row.name=FALSE)
+write.table(dataTable, "tidyData.txt", row.name=FALSE) 
